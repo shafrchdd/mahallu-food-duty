@@ -20,8 +20,8 @@ function doPost(e) {
   }
   const safe = JSON.stringify(result).replace(/</g, '\\u003c');
   return HtmlService.createHtmlOutput(
-    '<!doctype html><meta charset="utf-8"><script>parent.postMessage({type:"mahallu-sheet-result",data:' +
-    safe + '}, "*");</script>'
+    '<!doctype html><meta charset="utf-8"><script>(function(){var m={type:"mahallu-sheet-result",data:' +
+    safe + '};try{window.top.postMessage(m,"*");}catch(e){}try{window.parent.postMessage(m,"*");}catch(e){}})();</script>'
   ).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 function authorized_(key) {
