@@ -1,1 +1,0 @@
-One-time QA cleanup trigger: reset Firestore shared state after test run.
