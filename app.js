@@ -945,3 +945,4 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {})
   );
 }
+\nwindow.MahalluApp = {\n  getState: () => JSON.parse(JSON.stringify(state)),\n  replaceState: next => {\n    if (!next || !Array.isArray(next.people) || !next.days || !next.rotation) throw new Error('Invalid Sheet data');\n    state = next;\n    if (!state.rotation.startDate) state.rotation.startDate = today();\n    save(); refreshAll(); renderSchedule(); renderPeople(); renderHistoryIfOpen();\n  }\n};\n
