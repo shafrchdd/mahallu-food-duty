@@ -107,6 +107,7 @@
         const result = await writeRemote(window.MahalluApp.getState(), Number(remote.version) || 0);
         if (!result || !result.ok) throw new Error(result && result.message || 'ആദ്യ ഡാറ്റ മാറ്റാൻ കഴിഞ്ഞില്ല.');
         version = Number(result.version) || 1;
+        localStorage.removeItem('mahallu_food_duty_pwa_v1');
         ready = true; bootstrapped = true;
         status('ആദ്യ ഡാറ്റ Google Sheet-ൽ സേവ് ചെയ്തു ✓', 'ok');
       }
