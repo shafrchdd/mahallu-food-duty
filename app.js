@@ -230,15 +230,17 @@ function renderDay(date, index) {
       '"><div class="meal-title">' +
       m.label +
       '</div>' +
-      (active
-        ? '<label class="meal-check"><input type="checkbox" data-meal-date="' +
-          date +
-          '" data-meal="' +
-          m.id +
-          '" ' +
-          (d.meals[m.id] ? 'checked' : '') +
-          '> ലഭിച്ചു</label>'
-        : '<div class="meal-check">വേണ്ട</div>') +
+      (index === 0
+        ? active
+          ? '<label class="meal-check"><input type="checkbox" data-meal-date="' +
+            date +
+            '" data-meal="' +
+            m.id +
+            '" ' +
+            (d.meals[m.id] ? 'checked' : '') +
+            '> ലഭിച്ചു</label>'
+          : '<div class="meal-check">വേണ്ട</div>'
+        : '<div class="meal-check">' + (active ? ' ' : 'വേണ്ട') + '</div>') +
       '</div>'
     );
   }).join('');
@@ -255,7 +257,7 @@ function renderDay(date, index) {
       '</label>'
   ).join('');
   return (
-    '<article class="day-card ' +
+    '<article class="day-card day-' + index + ' ' +
     (index === 0 ? 'today' : '') +
     '"><div class="day-header"><div><div class="day-title">' +
     labels[index] +
@@ -281,11 +283,8 @@ function renderDay(date, index) {
       : '<div class="empty-state">ആളുകളെ ആദ്യം ചേർക്കുക</div>') +
     '<div class="day-summary">' +
     call +
-    '<span class="meal-count">' +
-    got +
-    '/' +
-    required +
-    ' ഭക്ഷണം ലഭിച്ചു</span></div>' +
+    (index === 0 ? '<span class="meal-count">' + got + '/' + required + ' ഭക്ഷണം ലഭിച്ചു</span>' : '') +
+    '</div>' +
     '<div class="action-row call-row">' +
     (p && p.phone
       ? '<a class="btn primary" style="flex:1" href="tel:' +
