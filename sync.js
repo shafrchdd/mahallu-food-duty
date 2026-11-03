@@ -1,5 +1,5 @@
 (function () {
-  const CONFIG_KEY = 'mahallu_food_duty_sheet_url';
+  const CONFIG_KEY = 'mahallu_food_duty_sheet_url';\n  const ACCESS_KEY = 'mahallu_food_duty_access_key';\n  let accessKey = localStorage.getItem(ACCESS_KEY) || '';
   let endpoint = localStorage.getItem(CONFIG_KEY) || '';
   let version = Number(localStorage.getItem(CONFIG_KEY + '_version') || 0);
   let timer = null, busy = false, pending = false, ready = false;
@@ -22,7 +22,7 @@
       }
       window[callback] = data => finish(null, data);
       script.onerror = () => finish(new Error('Google Sheet ബന്ധിപ്പിക്കാൻ കഴിഞ്ഞില്ല.'));
-      script.src = endpoint + '?prefix=' + callback + '&t=' + Date.now();
+      script.src = endpoint + '?prefix=' + callback + '&key=' + encodeURIComponent(accessKey) + '&t=' + Date.now();
       document.head.appendChild(script);
     });
   }
@@ -35,7 +35,7 @@
       frame.name = requestId; frame.hidden = true;
       form.method = 'POST'; form.action = endpoint; form.target = requestId; form.hidden = true;
       payload.name = 'payload';
-      payload.value = JSON.stringify({ expectedVersion: version, state: state });
+      payload.value = JSON.stringify({ expectedVersion: version, state: state, key: accessKey });
       form.appendChild(payload); document.body.append(frame, form);
       const timeout = setTimeout(() => finish(new Error('Sync സമയപരിധി കഴിഞ്ഞു.')), 20000);
       function finish(err, data) {
@@ -54,7 +54,7 @@
   async function connect(migrate) {
     const url = $('sheetUrl').value.trim();
     if (!validUrl(url)) { status('ശരിയായ Apps Script /exec URL നൽകുക.', 'error'); return; }
-    endpoint = url; localStorage.setItem(CONFIG_KEY, endpoint);
+    endpoint = url; localStorage.setItem(CONFIG_KEY, endpoint);\n    accessKey = $('sheetAccessKey').value.trim();\n    if (!accessKey) { status('Access Key നൽകുക.', 'error'); return; }\n    localStorage.setItem(ACCESS_KEY, accessKey);
     status('Google Sheet പരിശോധിക്കുന്നു…');
     try {
       const remote = await readRemote();
@@ -117,7 +117,7 @@
   }
   window.MahalluCloud = { queueSave };
   window.addEventListener('load', () => {
-    if ($('sheetUrl')) $('sheetUrl').value = endpoint;
+    if ($('sheetUrl')) $('sheetUrl').value = endpoint;\n    if ($('sheetAccessKey')) $('sheetAccessKey').value = accessKey;
     if (endpoint && localStorage.getItem(CONFIG_KEY + '_connected') === '1') {
       connectExisting();
     }
