@@ -1,5 +1,7 @@
 (function () {
-  const CONFIG_KEY = 'mahallu_food_duty_sheet_url';\n  const ACCESS_KEY = 'mahallu_food_duty_access_key';\n  let accessKey = localStorage.getItem(ACCESS_KEY) || '';
+  const CONFIG_KEY = 'mahallu_food_duty_sheet_url';
+  const ACCESS_KEY = 'mahallu_food_duty_access_key';
+  let accessKey = localStorage.getItem(ACCESS_KEY) || '';
   let endpoint = localStorage.getItem(CONFIG_KEY) || '';
   let version = Number(localStorage.getItem(CONFIG_KEY + '_version') || 0);
   let timer = null, busy = false, pending = false, ready = false;
@@ -54,7 +56,10 @@
   async function connect(migrate) {
     const url = $('sheetUrl').value.trim();
     if (!validUrl(url)) { status('ശരിയായ Apps Script /exec URL നൽകുക.', 'error'); return; }
-    endpoint = url; localStorage.setItem(CONFIG_KEY, endpoint);\n    accessKey = $('sheetAccessKey').value.trim();\n    if (!accessKey) { status('Access Key നൽകുക.', 'error'); return; }\n    localStorage.setItem(ACCESS_KEY, accessKey);
+    endpoint = url; localStorage.setItem(CONFIG_KEY, endpoint);
+    accessKey = $('sheetAccessKey').value.trim();
+    if (!accessKey) { status('Access Key നൽകുക.', 'error'); return; }
+    localStorage.setItem(ACCESS_KEY, accessKey);
     status('Google Sheet പരിശോധിക്കുന്നു…');
     try {
       const remote = await readRemote();
@@ -117,7 +122,8 @@
   }
   window.MahalluCloud = { queueSave };
   window.addEventListener('load', () => {
-    if ($('sheetUrl')) $('sheetUrl').value = endpoint;\n    if ($('sheetAccessKey')) $('sheetAccessKey').value = accessKey;
+    if ($('sheetUrl')) $('sheetUrl').value = endpoint;
+    if ($('sheetAccessKey')) $('sheetAccessKey').value = accessKey;
     if (endpoint && localStorage.getItem(CONFIG_KEY + '_connected') === '1') {
       connectExisting();
     }
