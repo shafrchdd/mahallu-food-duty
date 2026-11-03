@@ -127,9 +127,11 @@ function rotationInfo(date) {
 function autoPerson(date) {
   const info = rotationInfo(date);
   if (!info.n) return null;
-  const seq = [...info.sequence],
-    sw = state.rotation.swap;
-  if (sw && sw.loop === info.loop) {
+  const seq = [...info.sequence];
+  const rangeSwap = state.rotation.tempSwap;
+  const activeRangeSwap = rangeSwap && date >= rangeSwap.startDate && date <= rangeSwap.endDate;
+  const sw = activeRangeSwap ? rangeSwap : state.rotation.swap;
+  if (sw && (activeRangeSwap || sw.loop === info.loop)) {
     const a = seq.findIndex(p => p.id === sw.a),
       b = seq.findIndex(p => p.id === sw.b);
     if (a >= 0 && b >= 0) {
@@ -330,33 +332,35 @@ function populatePersonSelect(el, all) {
 }
 function renderRotation() {
   const list = ordered();
-  ['startPerson', 'swapA', 'swapB'].forEach(id => {
-    const el = $(id),
-      old = el.value;
+  ['startPerson', 'dutySwapA', 'dutySwapB'].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    const old = el.value;
     populatePersonSelect(el, false);
     if ([...el.options].some(o => o.value === old)) el.value = old;
   });
   if (list.length && !state.rotation.startPersonId)
     state.rotation.startPersonId = list[0].id;
-  if (
-    state.rotation.startPersonId &&
-    [...$('startPerson').options].some(
-      o => o.value === state.rotation.startPersonId
-    )
-  )
+  if (state.rotation.startPersonId &&
+      [...$('startPerson').options].some(o => o.value === state.rotation.startPersonId))
     $('startPerson').value = state.rotation.startPersonId;
   $('startDate').value = state.rotation.startDate || today();
-  const info = rotationInfo(today()),
-    end = info.n
-      ? addDays(state.rotation.startDate, (info.loop + 1) * info.n - 1)
-      : '';
-  $('swapStatus').textContent =
-    state.rotation.swap && state.rotation.swap.loop === info.loop
-      ? 'ഈ ലൂപ്പിലെ താൽക്കാലിക മാറ്റം സജീവമാണ്. അടുത്ത ലൂപ്പ് ' +
-        pretty(addDays(end, 1)) +
-        ' ന് പഴയ ക്രമത്തിൽ തുടങ്ങും.'
-      : 'ഇപ്പോൾ താൽക്കാലിക മാറ്റമില്ല.' +
-        (info.n ? ' നിലവിലെ ലൂപ്പ് ' + pretty(end) + ' ന് അവസാനിക്കും.' : '');
+
+  const rangeSwap = state.rotation.tempSwap;
+  if (!$('dutySwapStart').value) $('dutySwapStart').value = today();
+  if (!$('dutySwapEnd').value) $('dutySwapEnd').value = addDays(today(), 1);
+  if (rangeSwap) {
+    $('dutySwapA').value = rangeSwap.a;
+    $('dutySwapB').value = rangeSwap.b;
+    $('dutySwapStart').value = rangeSwap.startDate;
+    $('dutySwapEnd').value = rangeSwap.endDate;
+    const a = findPerson(rangeSwap.a), b = findPerson(rangeSwap.b);
+    $('dutySwapStatus').textContent = 'സജീവം: ' + (a?.name || 'വ്യക്തി') + ' ↔ ' +
+      (b?.name || 'വ്യക്തി') + ' · ' + pretty(rangeSwap.startDate) + ' മുതൽ ' +
+      pretty(rangeSwap.endDate) + ' വരെ.';
+  } else {
+    $('dutySwapStatus').textContent = 'ഇപ്പോൾ താൽക്കാലിക സ്ഥാനമാറ്റമില്ല.';
+  }
   $('totalPeopleBadge').textContent = list.length + ' പേർ';
 }
 function renderSchedule() {
@@ -846,37 +850,44 @@ $('saveStart').onclick = () => {
   renderHistoryIfOpen();
   toast('റൊട്ടേഷൻ തുടക്കം മാറ്റി.');
 };
-$('applySwap').onclick = () => {
-  const a = $('swapA').value,
-    b = $('swapB').value,
-    info = rotationInfo(today());
-  if (!a || !b || a === b || !info.n) {
+$('applyDutySwap').onclick = () => {
+  const a = $('dutySwapA').value,
+    b = $('dutySwapB').value,
+    startDate = $('dutySwapStart').value,
+    endDate = $('dutySwapEnd').value;
+  if (!a || !b || a === b) {
     toast('രണ്ട് വ്യത്യസ്ത വ്യക്തികളെ തിരഞ്ഞെടുക്കുക.');
     return;
   }
-  const end = addDays(state.rotation.startDate, (info.loop + 1) * info.n - 1);
-  if (
-    !confirm(
-      'ഈ ലൂപ്പിൽ മാത്രം ഇരുവരുടെയും സ്ഥാനം മാറ്റണോ? ' +
-        pretty(addDays(end, 1)) +
-        ' മുതൽ പഴയ ക്രമം തിരികെ വരും.'
-    )
-  )
+  if (!startDate || !endDate || startDate < today() || endDate < startDate) {
+    toast('ഇന്നുമുതലുള്ള ശരിയായ തീയതി പരിധി തിരഞ്ഞെടുക്കുക.');
     return;
-  state.rotation.swap = { a, b, loop: info.loop };
-  refreshUpcoming();
-  save();
-  renderSchedule();
-  renderRotation();
-  toast('ഈ ലൂപ്പിൽ മാത്രം മാറ്റം സജ്ജമാക്കി.');
-};
-$('clearSwap').onclick = () => {
+  }
+  const personA = findPerson(a), personB = findPerson(b);
+  if (!personA || !personB) {
+    toast('തിരഞ്ഞെടുത്ത വ്യക്തികളെ കണ്ടെത്താനായില്ല.');
+    return;
+  }
+  if (!confirm(personA.name + ' , ' + personB.name + ' എന്നിവരുടെ ഡ്യൂട്ടി ' +
+      pretty(startDate) + ' മുതൽ ' + pretty(endDate) + ' വരെ പരസ്പരം മാറ്റണോ?')) return;
+  state.rotation.tempSwap = { a, b, startDate, endDate };
   state.rotation.swap = null;
   refreshUpcoming();
   save();
   renderSchedule();
-  renderRotation();
-  toast('താൽക്കാലിക മാറ്റം ഒഴിവാക്കി.');
+  toast('താൽക്കാലിക സ്ഥാനമാറ്റം സജ്ജമാക്കി.');
+};
+$('clearDutySwap').onclick = () => {
+  if (!state.rotation.tempSwap) {
+    toast('ഒഴിവാക്കാൻ സജീവ സ്ഥാനമാറ്റമില്ല.');
+    return;
+  }
+  if (!confirm('താൽക്കാലിക സ്ഥാനമാറ്റം ഒഴിവാക്കി പഴയ ഡ്യൂട്ടി ക്രമം തിരികെ കൊണ്ടുവരണോ?')) return;
+  state.rotation.tempSwap = null;
+  refreshUpcoming();
+  save();
+  renderSchedule();
+  toast('താൽക്കാലിക സ്ഥാനമാറ്റം ഒഴിവാക്കി.');
 };
 $('closeModal').onclick = () => $('personModal').classList.add('hidden');
 $('personModal').onclick = e => {
