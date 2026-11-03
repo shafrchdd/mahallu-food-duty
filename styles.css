@@ -447,18 +447,44 @@ button:disabled {
   overflow: hidden;
 }
 .area-heading {
+  width: 100%;
+  border: 0;
   background: #f7faf8;
+  color: inherit;
   padding: 11px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  text-align: left;
   font-size: 12px;
   font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
 }
-.area-heading span:last-child {
+.area-heading-name {
+  min-width: 0;
+}
+.area-heading-meta {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 9px;
   font-size: 10px;
   color: var(--muted);
   font-weight: 600;
+}
+.area-chevron {
+  display: inline-block;
+  font-size: 17px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+.area-heading[aria-expanded="true"] .area-chevron {
+  transform: rotate(180deg);
+}
+.area-content[hidden] {
+  display: none !important;
 }
 .person-row {
   display: flex;
