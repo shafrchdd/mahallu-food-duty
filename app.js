@@ -432,9 +432,12 @@ function renderPeople() {
   const list = ordered(),
     q = $('peopleSearch').value.trim().toLowerCase();
   $('peopleCount').textContent = list.length + ' പേർ';
+  // Keep the last selected area when the people form is re-rendered.
+  const selectedArea = $('personArea').value;
   $('personArea').innerHTML = AREAS.map(
     a => '<option value="' + esc(a) + '">' + esc(a) + '</option>'
   ).join('');
+  if (AREAS.includes(selectedArea)) $('personArea').value = selectedArea;
   let index = 0,
     out = '';
   AREAS.forEach(area => {
