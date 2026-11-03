@@ -716,3 +716,27 @@ button:disabled {
     padding-right: 20px;
   }
 }
+
+/* Clear visual distinction between the three duty dates */
+.day-card.day-0 {
+  background: linear-gradient(145deg, #f0fbf3 0%, #ffffff 58%);
+  border: 2px solid #58a875;
+  box-shadow: 0 5px 18px #176b4b18;
+}
+.day-card.day-0 .day-title {
+  color: #176b4b;
+}
+.day-card.day-1 {
+  background: linear-gradient(145deg, #eff7ff 0%, #ffffff 58%);
+  border: 1.5px solid #78aee8;
+}
+.day-card.day-1 .day-title {
+  color: #2366a8;
+}
+.day-card.day-2 {
+  background: linear-gradient(145deg, #fff6e9 0%, #ffffff 58%);
+  border: 1.5px solid #e9b56b;
+}
+.day-card.day-2 .day-title {
+  color: #a45b0a;
+}
