@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mahallu-food-shell-v1';
+const CACHE_NAME = 'mahallu-food-shell-v2';
 const SHELL = ['./', './manifest.json', './icon.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(
