@@ -18,4 +18,4 @@ Expected site URL: https://shafrchdd.github.io/mahallu-food-duty/
 - Offline app shell and installable PWA
 
 ## Data
-App data is stored locally in each browser using localStorage. It does not automatically synchronize between phones. Export JSON backups regularly.
+Google Sheets is the single source of truth for app records. Each device keeps only the Apps Script URL and shared access key locally; app records are loaded from the Sheet and changes are written back to it. Other connected devices silently refresh when the Sheet version changes. The PWA shell may be cached for offline loading, but app records are not persisted as a separate local database.
