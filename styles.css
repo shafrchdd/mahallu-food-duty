@@ -577,7 +577,7 @@ button:disabled {
   transform: translateX(-50%);
   width: min(100%, 620px);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   background: #fff;
   border-top: 1px solid var(--line);
