@@ -89,6 +89,7 @@ let state = load(),
   toastTimer = null;
 function save() {
   localStorage.setItem(KEY, JSON.stringify(state));
+  if (window.MahalluCloud) window.MahalluCloud.queueSave();
 }
 function ordered() {
   return [...state.people].sort(
