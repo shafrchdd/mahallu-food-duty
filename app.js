@@ -88,7 +88,7 @@ let state = load(),
   modalDate = null,
   toastTimer = null;
 function save() {
-  localStorage.setItem(KEY, JSON.stringify(state));
+  // The Google Sheet is the only persistent database. Keep app data in memory only.
   if (window.MahalluCloud) window.MahalluCloud.queueSave();
 }
 function ordered() {
