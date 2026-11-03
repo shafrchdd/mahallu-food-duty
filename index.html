@@ -48,6 +48,29 @@
             </div>
             <span class="count-pill" id="totalPeopleBadge">0 പേർ</span>
           </div>
+          <section class="settings-card duty-swap-card">
+            <h3>താൽക്കാലിക സ്ഥാനമാറ്റം</h3>
+            <p class="hint">തിരഞ്ഞെടുത്ത കാലയളവിൽ രണ്ട് വ്യക്തികളുടെ ഡ്യൂട്ടി സ്ഥാനം പരസ്പരം മാറ്റാം. കാലാവധി കഴിഞ്ഞാൽ പഴയ ക്രമം സ്വയം തുടരും.</p>
+            <label class="field-label">ആദ്യ വ്യക്തി</label>
+            <select id="dutySwapA" class="field-control"></select>
+            <label class="field-label">രണ്ടാമത്തെ വ്യക്തി</label>
+            <select id="dutySwapB" class="field-control"></select>
+            <div class="filter-dates">
+              <div>
+                <label class="field-label">മുതൽ</label>
+                <input id="dutySwapStart" type="date" class="field-control" />
+              </div>
+              <div>
+                <label class="field-label">വരെ</label>
+                <input id="dutySwapEnd" type="date" class="field-control" />
+              </div>
+            </div>
+            <div class="button-row">
+              <button class="btn warning" id="applyDutySwap">സ്ഥാനമാറ്റം പ്രയോഗിക്കുക</button>
+              <button class="btn light" id="clearDutySwap">മാറ്റം ഒഴിവാക്കുക</button>
+            </div>
+            <p id="dutySwapStatus" class="hint swap-status" role="status"></p>
+          </section>
           <div id="dayCards" class="day-list"></div>
         </section>
 
@@ -143,23 +166,6 @@
               <button class="btn primary full" id="saveStart">
                 തുടക്കം മാറ്റുക
               </button>
-              <div class="separator"></div>
-              <h3>താൽക്കാലികമായി സ്ഥാനം മാറ്റുക</h3>
-              <p class="hint">
-                ഈ ലൂപ്പിൽ മാത്രം മാറ്റം. അടുത്ത ലൂപ്പിൽ പഴയ ക്രമം സ്വയം വരും.
-              </p>
-              <label class="field-label">ആദ്യ വ്യക്തി</label
-              ><select id="swapA" class="field-control"></select>
-              <label class="field-label">രണ്ടാമത്തെ വ്യക്തി</label
-              ><select id="swapB" class="field-control"></select>
-              <div class="button-row">
-                <button class="btn warning" id="applySwap">
-                  താൽക്കാലികമായി മാറ്റുക</button
-                ><button class="btn light" id="clearSwap">
-                  മാറ്റം ഒഴിവാക്കുക
-                </button>
-              </div>
-              <p id="swapStatus" class="hint swap-status"></p>
             </div>
           </section>
 
