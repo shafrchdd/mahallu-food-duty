@@ -780,8 +780,7 @@ function exportCsv() {
         .map(r =>
           r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',')
         )
-        .join('\\r
-'),
+        .join('\\r\\n'),
     'mahallu-food-history.csv',
     'text/csv;charset=utf-8'
   );
