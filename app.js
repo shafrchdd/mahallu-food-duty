@@ -633,7 +633,6 @@ function refreshForCalendarDateChange() {
   [0, 1, 2].forEach(i => day(addDays(currentDate, i)));
   renderSchedule();
   renderHistoryIfOpen();
-  save();
   return true;
 }
 
