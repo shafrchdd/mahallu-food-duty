@@ -741,3 +741,18 @@ button:disabled {
 .day-card.day-2 .day-title {
   color: #a45b0a;
 }
+
+
+/* Temporary duty position swap controls on the Duty page */
+.duty-swap-card {
+  border-color: #cfe3d5;
+  background: linear-gradient(145deg, #f7fcf8 0%, #ffffff 72%);
+}
+.duty-swap-card h3 {
+  margin: 0 0 5px;
+  font-size: 14px;
+  color: var(--green);
+}
+.duty-swap-card .button-row .btn {
+  min-width: 0;
+}
