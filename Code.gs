@@ -4,7 +4,7 @@ function doGet(e) {
   const key = String((e && e.parameter && e.parameter.key) || '');
   if (!authorized_(key)) return jsonp_(e, { ok: false, error: 'Access denied' });
   const callback = String((e && e.parameter && e.parameter.prefix) || '');
-  if (!/^[$A-Z_a-z][$\\w]*$/.test(callback)) return json_({ ok: false, error: 'Invalid callback' });
+  if (!/^[$A-Z_a-z][$\w]*$/.test(callback)) return json_({ ok: false, error: 'Invalid callback' });
   const result = readState_();
   return ContentService.createTextOutput(callback + '(' + JSON.stringify(result) + ');')
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
@@ -30,7 +30,7 @@ function authorized_(key) {
 }
 function jsonp_(e, value) {
   const callback = String((e && e.parameter && e.parameter.prefix) || '');
-  if (!/^[$A-Z_a-z][$\\w]*$/.test(callback)) return json_(value);
+  if (!/^[$A-Z_a-z][$\w]*$/.test(callback)) return json_(value);
   return ContentService.createTextOutput(callback + '(' + JSON.stringify(value) + ');')
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
