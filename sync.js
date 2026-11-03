@@ -1,11 +1,13 @@
 (function () {
+  // Only connection credentials are kept on this device. App records live in Google Sheets.
   const CONFIG_KEY = 'mahallu_food_duty_sheet_url';
   const ACCESS_KEY = 'mahallu_food_duty_access_key';
-  let accessKey = localStorage.getItem(ACCESS_KEY) || '';
   let endpoint = localStorage.getItem(CONFIG_KEY) || '';
-  let version = Number(localStorage.getItem(CONFIG_KEY + '_version') || 0);
-  let timer = null, busy = false, pending = false, ready = false;
+  let accessKey = localStorage.getItem(ACCESS_KEY) || '';
+  let version = 0, timer = null, pollTimer = null;
+  let busy = false, pending = false, ready = false, bootstrapped = false;
   const $ = id => document.getElementById(id);
+
   function status(message, kind) {
     const el = $('sheetSyncStatus');
     if (el) { el.textContent = message; el.dataset.kind = kind || ''; }
@@ -15,7 +17,7 @@
   }
   function readRemote() {
     return new Promise((resolve, reject) => {
-      const callback = '__mahalluRead' + Date.now();
+      const callback = '__mahalluRead' + Date.now() + Math.random().toString(16).slice(2);
       const script = document.createElement('script');
       const timeout = setTimeout(() => finish(new Error('സർവറിൽ നിന്ന് മറുപടി ലഭിച്ചില്ല.')), 15000);
       function finish(err, data) {
@@ -28,7 +30,7 @@
       document.head.appendChild(script);
     });
   }
-  function writeRemote(state) {
+  function writeRemote(appState, expectedVersion) {
     return new Promise((resolve, reject) => {
       const frame = document.createElement('iframe');
       const form = document.createElement('form');
@@ -37,7 +39,7 @@
       frame.name = requestId; frame.hidden = true;
       form.method = 'POST'; form.action = endpoint; form.target = requestId; form.hidden = true;
       payload.name = 'payload';
-      payload.value = JSON.stringify({ expectedVersion: version, state: state, key: accessKey });
+      payload.value = JSON.stringify({ expectedVersion, state: appState, key: accessKey });
       form.appendChild(payload); document.body.append(frame, form);
       const timeout = setTimeout(() => finish(new Error('Sync സമയപരിധി കഴിഞ്ഞു.')), 20000);
       function finish(err, data) {
@@ -53,108 +55,131 @@
       form.submit();
     });
   }
-  async function connect(migrate) {
-    const url = $('sheetUrl').value.trim();
-    if (!validUrl(url)) { status('ശരിയായ Apps Script /exec URL നൽകുക.', 'error'); return; }
-    endpoint = url; localStorage.setItem(CONFIG_KEY, endpoint);
-    accessKey = $('sheetAccessKey').value.trim();
-    if (!accessKey) { status('Access Key നൽകുക.', 'error'); return; }
+  function storeConnection(url, key) {
+    endpoint = url; accessKey = key;
+    localStorage.setItem(CONFIG_KEY, endpoint);
     localStorage.setItem(ACCESS_KEY, accessKey);
-    status('Google Sheet പരിശോധിക്കുന്നു…');
+  }
+  function startPolling() {
+    clearInterval(pollTimer);
+    pollTimer = setInterval(pollRemote, 4000);
+  }
+  async function connect(loadFromSheet) {
+    const url = $('sheetUrl').value.trim();
+    const key = $('sheetAccessKey').value.trim();
+    if (!validUrl(url)) { status('ശരിയായ Apps Script /exec URL നൽകുക.', 'error'); return; }
+    if (!key) { status('Shared Access Key നൽകുക.', 'error'); return; }
+    storeConnection(url, key);
+    status('Google Sheet ബന്ധിപ്പിക്കുന്നു…');
+    try {
+      const remote = await readRemote();
+      if (!remote || !remote.ok) throw new Error(remote && remote.error || 'Sheet വായിക്കാൻ കഴിഞ്ഞില്ല.');
+      if (remote.exists && remote.state) {
+        if (loadFromSheet) {
+          pending = false; ready = false;
+          window.MahalluApp.replaceState(remote.state);
+          version = Number(remote.version) || 0;
+          pending = false; ready = true; bootstrapped = true;
+          status('Google Sheet-ലെ ഏറ്റവും പുതിയ ഡാറ്റ ലഭിച്ചു ✓', 'ok');
+          startPolling();
+        }
+      } else {
+        status('Google Sheet ഇപ്പോൾ ഒഴിഞ്ഞതാണ്. പഴയ ഫോണിലെ ഡാറ്റ ഒരിക്കൽ മാത്രം മാറ്റാൻ “ആദ്യ ഡാറ്റ മാറ്റുക” അമർത്തുക.', 'warn');
+      }
+    } catch (err) { status(err.message || 'Sync പരാജയപ്പെട്ടു.', 'error'); }
+  }
+  async function migrateOnce() {
+    const url = $('sheetUrl').value.trim();
+    const key = $('sheetAccessKey').value.trim();
+    if (!validUrl(url) || !key) { status('ശരിയായ Sheet URL-വും Access Key-യും നൽകുക.', 'error'); return; }
+    storeConnection(url, key);
+    status('ആദ്യ ഡാറ്റ Google Sheet-ലേക്ക് മാറ്റുന്നു…');
+    try {
+      const remote = await readRemote();
+      if (!remote || !remote.ok) throw new Error(remote && remote.error || 'Sheet പരിശോധിക്കാൻ കഴിഞ്ഞില്ല.');
+      if (remote.exists && remote.state) {
+        pending = false; ready = false;
+        window.MahalluApp.replaceState(remote.state);
+        version = Number(remote.version) || 0;
+        pending = false; ready = true; bootstrapped = true;
+        status('Sheet-ൽ ഡാറ്റ നേരത്തേ ഉണ്ട്. അതേ ഡാറ്റ ഉപയോഗിക്കുന്നു ✓', 'ok');
+      } else {
+        const result = await writeRemote(window.MahalluApp.getState(), Number(remote.version) || 0);
+        if (!result || !result.ok) throw new Error(result && result.message || 'ആദ്യ ഡാറ്റ മാറ്റാൻ കഴിഞ്ഞില്ല.');
+        version = Number(result.version) || 1;
+        ready = true; bootstrapped = true;
+        status('ആദ്യ ഡാറ്റ Google Sheet-ൽ സേവ് ചെയ്തു ✓', 'ok');
+      }
+      startPolling();
+    } catch (err) { status(err.message || 'ആദ്യ ഡാറ്റ മാറ്റാൻ കഴിഞ്ഞില്ല.', 'error'); }
+  }
+  async function syncNow() {
+    if (!endpoint || !ready || busy || !pending) return;
+    busy = true; status('Google Sheet-ലേക്ക് സേവ് ചെയ്യുന്നു…');
     try {
       const remote = await readRemote();
       if (!remote || !remote.ok) throw new Error('Sheet വായിക്കാൻ കഴിഞ്ഞില്ല.');
-      if (remote.exists && remote.state) {
-        if (migrate && !confirm('Google Sheet-ൽ ഇതിനകം ഡാറ്റയുണ്ട്. അതിനെ ഈ ഫോണിലെ ഡാറ്റയാക്കി മാറ്റണോ?')) return;
-        if (!migrate && !confirm('Google Sheet-ലെ ഡാറ്റ ഈ ഫോണിൽ ലോഡ് ചെയ്യണോ? ഈ ഫോണിലെ നിലവിലെ ഡാറ്റ മാറ്റിസ്ഥാപിക്കും.')) return;
-        window.MahalluApp.replaceState(remote.state);
-        version = remote.version || 0;
-        localStorage.setItem(CONFIG_KEY + '_version', String(version));
-        status('Google Sheet-ലെ ഡാറ്റ ലോഡ് ചെയ്തു ✓', 'ok');
-      } else {
-        if (!confirm('Sheet ഒഴിഞ്ഞിരിക്കുന്നു. ഈ ഫോണിലെ നിലവിലെ വിവരങ്ങൾ Google Sheet-ലേക്ക് മാറ്റണോ?')) return;
-        const result = await writeRemote(window.MahalluApp.getState());
-        if (!result || !result.ok) throw new Error(result && result.message || 'ഡാറ്റ അപ്‌ലോഡ് പരാജയപ്പെട്ടു.');
-        version = result.version; localStorage.setItem(CONFIG_KEY + '_version', String(version));
-        status('നിലവിലുള്ള ഡാറ്റ Google Sheet-ലേക്ക് മാറ്റി ✓', 'ok');
+      // If another phone saved first, retry this phone's latest edit against the new version.
+      if (Number(remote.version || 0) !== version) version = Number(remote.version) || 0;
+      let result = await writeRemote(window.MahalluApp.getState(), version);
+      if (result && result.conflict) {
+        const latest = await readRemote();
+        if (!latest || !latest.ok) throw new Error('പുതിയ Sheet ഡാറ്റ വായിക്കാൻ കഴിഞ്ഞില്ല.');
+        version = Number(latest.version) || 0;
+        result = await writeRemote(window.MahalluApp.getState(), version);
       }
-      ready = true; localStorage.setItem(CONFIG_KEY + '_connected', '1');
-    } catch (err) { status(err.message || 'Sync പരാജയപ്പെട്ടു.', 'error'); }
-  }
-  async function syncNow() {
-    if (!endpoint || !ready || busy) return;
-    busy = true; status('Sync ചെയ്യുന്നു…');
-    try {
-      const remote = await readRemote();
-      if (!remote.ok) throw new Error('Sheet വായിക്കാൻ കഴിഞ്ഞില്ല.');
-      if ((remote.version || 0) !== version) {
-        if (pending) {
-          status('മറ്റൊരു ഫോണിൽ മാറ്റമുണ്ട്. ഡാറ്റ സുരക്ഷയ്ക്കായി Sync നിർത്തി; “Sheet-ൽ നിന്ന് പുതുക്കുക” അമർത്തുക.', 'error');
-          pending = false; busy = false; return;
-        }
-        window.MahalluApp.replaceState(remote.state || window.MahalluApp.getState());
-        version = remote.version || 0;
-        localStorage.setItem(CONFIG_KEY + '_version', String(version));
-      } else {
-        const result = await writeRemote(window.MahalluApp.getState());
-        if (!result || !result.ok) throw new Error(result && result.message || 'Sync പരാജയപ്പെട്ടു.');
-        version = result.version; localStorage.setItem(CONFIG_KEY + '_version', String(version));
-      }
-      pending = false; status('അവസാനം Sync ചെയ്തു ✓', 'ok');
-    } catch (err) { status(err.message || 'Sync പരാജയപ്പെട്ടു.', 'error'); }
+      if (!result || !result.ok) throw new Error(result && result.message || 'സേവ് പരാജയപ്പെട്ടു.');
+      version = Number(result.version) || version + 1;
+      pending = false;
+      status('Google Sheet-ൽ സേവ് ചെയ്തു ✓', 'ok');
+    } catch (err) { status('Sync പ്രശ്നം: ' + (err.message || 'വീണ്ടും ശ്രമിക്കുക.'), 'error'); }
     busy = false;
+    if (pending) { clearTimeout(timer); timer = setTimeout(syncNow, 1000); }
   }
   function queueSave() {
     if (!ready) return;
-    pending = true; clearTimeout(timer); timer = setTimeout(syncNow, 1200);
+    pending = true; clearTimeout(timer); timer = setTimeout(syncNow, 700);
   }
-  async function pull() {
-    if (!endpoint) { status('ആദ്യം Google Sheet URL ബന്ധിപ്പിക്കുക.', 'error'); return; }
+  async function pollRemote() {
+    if (!ready || busy || pending) return;
     try {
       const remote = await readRemote();
-      if (!remote.ok || !remote.state) throw new Error('Sheet-ൽ ഡാറ്റ ലഭ്യമല്ല.');
-      if (!confirm('Google Sheet-ലെ ഡാറ്റ ഈ ഫോണിലേക്ക് ലോഡ് ചെയ്യണോ?')) return;
+      if (!remote || !remote.ok) return;
+      const remoteVersion = Number(remote.version) || 0;
+      if (remoteVersion > version && remote.state) {
+        // Silent refresh: no confirmation dialog on any phone.
+        ready = false;
+        window.MahalluApp.replaceState(remote.state);
+        version = remoteVersion;
+        pending = false;
+        ready = true;
+        status('മറ്റൊരു ഫോണിലെ പുതിയ മാറ്റങ്ങൾ ലഭിച്ചു ✓', 'ok');
+      }
+    } catch (_) {
+      status('Sheet-ുമായി ബന്ധപ്പെടാൻ കഴിയുന്നില്ല. ഇന്റർനെറ്റ് പരിശോധിക്കുക.', 'error');
+    }
+  }
+  async function pull() {
+    if (!endpoint) { status('ആദ്യം Google Sheet ബന്ധിപ്പിക്കുക.', 'error'); return; }
+    try {
+      const remote = await readRemote();
+      if (!remote || !remote.ok || !remote.state) throw new Error('Sheet-ൽ ഡാറ്റ ലഭ്യമല്ല.');
+      pending = false; ready = false;
       window.MahalluApp.replaceState(remote.state);
-      version = remote.version || 0; ready = true;
-      localStorage.setItem(CONFIG_KEY + '_version', String(version));
-      status('Sheet-ൽ നിന്ന് പുതുക്കി ✓', 'ok');
+      version = Number(remote.version) || 0;
+      pending = false; ready = true; bootstrapped = true;
+      status('ഏറ്റവും പുതിയ Sheet ഡാറ്റ ലഭിച്ചു ✓', 'ok');
+      startPolling();
     } catch (err) { status(err.message || 'പുതുക്കാൻ കഴിഞ്ഞില്ല.', 'error'); }
   }
-  window.MahalluCloud = { queueSave };
+  window.MahalluCloud = { queueSave, isReady: () => ready };
   window.addEventListener('load', () => {
     if ($('sheetUrl')) $('sheetUrl').value = endpoint;
     if ($('sheetAccessKey')) $('sheetAccessKey').value = accessKey;
-    if (endpoint && localStorage.getItem(CONFIG_KEY + '_connected') === '1') {
-      connectExisting();
-    }
-    $('connectSheet').onclick = () => connect(false);
-    $('migrateSheet').onclick = () => connect(true);
+    $('connectSheet').onclick = () => connect(true);
+    $('migrateSheet').onclick = migrateOnce;
     $('pullSheet').onclick = pull;
+    if (endpoint && accessKey) connect(true);
+    else status('Google Sheet ബന്ധിപ്പിക്കുക. ബന്ധിപ്പിച്ച ശേഷം എല്ലാ ഫോണിലും ഒരേ ഡാറ്റ ഉപയോഗിക്കും.', 'warn');
   });
-  async function connectExisting() {
-    try {
-      const remote = await readRemote();
-      if (remote && remote.ok) {
-        version = remote.version || 0; ready = true;
-        localStorage.setItem(CONFIG_KEY + '_version', String(version));
-        status('Google Sheet ബന്ധിപ്പിച്ചു ✓', 'ok');
-        if (remote.state && remote.version > 0) {
-          window.MahalluApp.replaceState(remote.state);
-        }
-      }
-    } catch (err) { status('Sheet ബന്ധം ലഭ്യമല്ല: ' + err.message, 'error'); }
-  }
-  setInterval(() => { if (ready && !pending && !busy) syncNowReadOnly(); }, 30000);
-  async function syncNowReadOnly() {
-    try {
-      const remote = await readRemote();
-      if (remote.ok && (remote.version || 0) > version) {
-        if (confirm('മറ്റൊരു ഫോണിൽ പുതിയ മാറ്റങ്ങളുണ്ട്. പുതുക്കണോ?')) {
-          window.MahalluApp.replaceState(remote.state);
-          version = remote.version; localStorage.setItem(CONFIG_KEY + '_version', String(version));
-          status('പുതിയ ഡാറ്റ ലഭിച്ചു ✓', 'ok');
-        } else status('പുതിയ മാറ്റങ്ങൾ ലഭ്യമാണ്. പിന്നീട് പുതുക്കാം.', 'warn');
-      }
-    } catch (_) {}
-  }
 })();
