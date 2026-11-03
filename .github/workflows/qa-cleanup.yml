@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Authenticate with Firebase anonymous auth
         env:
-          FIREBASE_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_API_KEY: AIzaSyAd1tvf9Ug0a5EwV36r6HT7k6LhUxEaD40
         run: |
           set -euo pipefail
           AUTH_RESPONSE="$(curl -fsS -X POST "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}" -H "Content-Type: application/json" --data '{"returnSecureToken":true}')"
