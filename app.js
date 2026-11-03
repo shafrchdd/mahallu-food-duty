@@ -618,6 +618,53 @@ function refreshAll() {
   renderHistoryOptions();
   renderHistoryIfOpen();
 }
+
+// Detect local calendar-day changes so assignments roll over even when
+// the app stays open across midnight or returns from the background.
+let observedCalendarDate = today();
+let midnightRefreshTimer = null;
+
+function refreshForCalendarDateChange() {
+  const currentDate = today();
+  if (currentDate === observedCalendarDate) return false;
+
+  observedCalendarDate = currentDate;
+  refreshUpcoming();
+  [0, 1, 2].forEach(i => day(addDays(currentDate, i)));
+  renderSchedule();
+  renderHistoryIfOpen();
+  save();
+  return true;
+}
+
+function scheduleMidnightRefresh() {
+  clearTimeout(midnightRefreshTimer);
+  const now = new Date();
+  const nextMidnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0, 0, 2
+  );
+  const delay = Math.max(1000, nextMidnight.getTime() - now.getTime());
+  midnightRefreshTimer = setTimeout(() => {
+    refreshForCalendarDateChange();
+    scheduleMidnightRefresh();
+  }, delay);
+}
+
+// The timer handles an open page; these events cover sleeping tabs,
+// app switching, device wake, and returning to the app after midnight.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refreshForCalendarDateChange();
+});
+window.addEventListener('focus', refreshForCalendarDateChange);
+window.addEventListener('pageshow', refreshForCalendarDateChange);
+
+// Browser timers can be throttled in the background, so also check the
+// local date periodically and whenever the app becomes active again.
+setInterval(refreshForCalendarDateChange, 30000);
+scheduleMidnightRefresh();
 let activeRecognition = null;
 function startVoiceInput(targetId, button) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
