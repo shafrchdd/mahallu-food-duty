@@ -44,6 +44,77 @@
           </div>
           <div id="dayCards" class="day-list"></div>
 
+        <section id="peoplePage" class="page">
+          <div class="section-heading">
+            <div>
+              <h2>ആളുകൾ</h2>
+              <p>ഏരിയ അനുസരിച്ച് ചേർക്കുക</p>
+            </div>
+            <span class="count-pill" id="peopleCount">0 പേർ</span>
+          </div>
+          <section class="form-card">
+            <h3>പുതിയ വ്യക്തിയെ ചേർക്കുക</h3>
+            <form id="personForm">
+              <label class="field-label">ഏരിയ</label
+              ><select id="personArea" class="field-control" required></select>
+              <label class="field-label">ശബ്ദത്തിന്റെ ഭാഷ</label>
+              <select id="voiceLanguage" class="field-control"><option value="ml-IN">മലയാളം</option><option value="en-IN">English</option></select>
+              <label class="field-label">പേര്</label><div class="voice-input-row"><input id="personName" class="field-control" required maxlength="70" placeholder="പേര് ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ പറയുക" /><button class="voice-btn" type="button" data-voice-target="personName">🎙️</button></div>
+              <label class="field-label">ഫോൺ നമ്പർ</label><div class="voice-input-row"><input id="personPhone" class="field-control" type="tel" inputmode="tel" maxlength="20" placeholder="ഫോൺ നമ്പർ ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ പറയുക" /><button class="voice-btn" type="button" data-voice-target="personPhone">🎙️</button></div>
+              <p class="hint voice-hint" id="voiceHint">മൈക്ക് അമർത്തി പേര് അല്ലെങ്കിൽ നമ്പർ പറയുക.</p>
+              <button class="btn primary full" type="submit">
+                + വ്യക്തിയെ ചേർക്കുക
+              </button>
+            </form>
+          </section>
+          <div class="search-wrap">
+            <input
+              id="peopleSearch"
+              class="field-control"
+              placeholder="പേര് / ഫോൺ തിരയുക"
+            />
+          </div>
+          <div id="peopleList" class="area-list"></div>
+        <section id="historyPage" class="page">
+          <div class="section-heading">
+            <div>
+              <h2>കഴിഞ്ഞത്</h2>
+              <p>ഏത് ദിവസം ഏത് സമയത്ത് ഭക്ഷണം ലഭിച്ചു</p>
+            </div>
+          </div>
+          <section class="form-card filters-card">
+            <label class="field-label">വ്യക്തി</label
+            ><select id="historyPerson" class="field-control"></select>
+            <div class="filter-dates">
+              <div>
+                <label class="field-label">മുതൽ</label
+                ><input id="historyFrom" type="date" class="field-control" />
+              </div>
+              <div>
+                <label class="field-label">വരെ</label
+                ><input id="historyTo" type="date" class="field-control" />
+              </div>
+            </div>
+            <div class="button-row">
+              <button class="btn light" id="clearFilters">
+                ഫിൽട്ടർ ഒഴിവാക്കുക</button
+              ><button class="btn soft" id="exportCsv">CSV ഡൗൺലോഡ്</button>
+            </div>
+          </section>
+          <div id="historyRows" class="history-list"></div>
+          <div class="pagination">
+            <button class="btn light" id="prevPage">← മുമ്പ്</button
+            ><span id="pageInfo"></span
+            ><button class="btn light" id="nextPage">അടുത്തത് →</button>
+          </div>
+        </section>
+        <section id="settingsPage" class="page">
+          <div class="section-heading">
+            <div>
+              <h2>ക്രമീകരണങ്ങൾ</h2>
+              <p>റൊട്ടേഷൻ, ക്ലൗഡ് സിങ്ക്, ഡാറ്റ ബാക്കപ്പ്</p>
+            </div>
+          </div>
           <section class="settings-card">
             <button
               class="settings-toggle"
@@ -82,39 +153,7 @@
               <p id="swapStatus" class="hint swap-status"></p>
             </div>
           </section>
-        </section>
 
-        <section id="peoplePage" class="page">
-          <div class="section-heading">
-            <div>
-              <h2>ആളുകൾ</h2>
-              <p>ഏരിയ അനുസരിച്ച് ചേർക്കുക</p>
-            </div>
-            <span class="count-pill" id="peopleCount">0 പേർ</span>
-          </div>
-          <section class="form-card">
-            <h3>പുതിയ വ്യക്തിയെ ചേർക്കുക</h3>
-            <form id="personForm">
-              <label class="field-label">ഏരിയ</label
-              ><select id="personArea" class="field-control" required></select>
-              <label class="field-label">ശബ്ദത്തിന്റെ ഭാഷ</label>
-              <select id="voiceLanguage" class="field-control"><option value="ml-IN">മലയാളം</option><option value="en-IN">English</option></select>
-              <label class="field-label">പേര്</label><div class="voice-input-row"><input id="personName" class="field-control" required maxlength="70" placeholder="പേര് ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ പറയുക" /><button class="voice-btn" type="button" data-voice-target="personName">🎙️</button></div>
-              <label class="field-label">ഫോൺ നമ്പർ</label><div class="voice-input-row"><input id="personPhone" class="field-control" type="tel" inputmode="tel" maxlength="20" placeholder="ഫോൺ നമ്പർ ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ പറയുക" /><button class="voice-btn" type="button" data-voice-target="personPhone">🎙️</button></div>
-              <p class="hint voice-hint" id="voiceHint">മൈക്ക് അമർത്തി പേര് അല്ലെങ്കിൽ നമ്പർ പറയുക.</p>
-              <button class="btn primary full" type="submit">
-                + വ്യക്തിയെ ചേർക്കുക
-              </button>
-            </form>
-          </section>
-          <div class="search-wrap">
-            <input
-              id="peopleSearch"
-              class="field-control"
-              placeholder="പേര് / ഫോൺ തിരയുക"
-            />
-          </div>
-          <div id="peopleList" class="area-list"></div>
           <section class="settings-card sheet-card">
             <h3>Google Sheets Sync</h3>
             <p class="hint">ഒരേ ഡാറ്റ ഒന്നിലധികം ഫോണുകളിൽ ഉപയോഗിക്കാൻ Google Sheet ബന്ധിപ്പിക്കുക.</p>
@@ -143,41 +182,14 @@
               /></label>
             </div>
           </section>
+
+          <section class="settings-card">
+            <h3>ബന്ധിപ്പിച്ച Google Sheet</h3>
+            <p class="hint">ഈ ആപ്പിന്റെ പങ്കിട്ട ഡാറ്റ സൂക്ഷിക്കുന്ന ഷീറ്റ് തുറക്കാം.</p>
+            <a class="btn light full" href="https://docs.google.com/spreadsheets/d/1oAfB8ocXOXprf11ww8mrBdi1ND2fBttigwAl13qLjWs/edit" target="_blank" rel="noopener">Google Sheet തുറക്കുക ↗</a>
+          </section>
         </section>
 
-        <section id="historyPage" class="page">
-          <div class="section-heading">
-            <div>
-              <h2>കഴിഞ്ഞത്</h2>
-              <p>ഏത് ദിവസം ഏത് സമയത്ത് ഭക്ഷണം ലഭിച്ചു</p>
-            </div>
-          </div>
-          <section class="form-card filters-card">
-            <label class="field-label">വ്യക്തി</label
-            ><select id="historyPerson" class="field-control"></select>
-            <div class="filter-dates">
-              <div>
-                <label class="field-label">മുതൽ</label
-                ><input id="historyFrom" type="date" class="field-control" />
-              </div>
-              <div>
-                <label class="field-label">വരെ</label
-                ><input id="historyTo" type="date" class="field-control" />
-              </div>
-            </div>
-            <div class="button-row">
-              <button class="btn light" id="clearFilters">
-                ഫിൽട്ടർ ഒഴിവാക്കുക</button
-              ><button class="btn soft" id="exportCsv">CSV ഡൗൺലോഡ്</button>
-            </div>
-          </section>
-          <div id="historyRows" class="history-list"></div>
-          <div class="pagination">
-            <button class="btn light" id="prevPage">← മുമ്പ്</button
-            ><span id="pageInfo"></span
-            ><button class="btn light" id="nextPage">അടുത്തത് →</button>
-          </div>
-        </section>
       </main>
 
       <nav class="bottom-nav" aria-label="Main navigation">
@@ -189,6 +201,9 @@
         </button>
         <button class="nav-item" data-page="historyPage">
           <span>◷</span><small>കഴിഞ്ഞത്</small>
+        </button>
+        <button class="nav-item" data-page="settingsPage">
+          <span>⚙</span><small>ക്രമീകരണം</small>
         </button>
       </nav>
 
