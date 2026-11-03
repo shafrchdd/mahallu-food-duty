@@ -115,6 +115,18 @@
             />
           </div>
           <div id="peopleList" class="area-list"></div>
+          <section class="settings-card sheet-card">
+            <h3>Google Sheets Sync</h3>
+            <p class="hint">ഒരേ ഡാറ്റ ഒന്നിലധികം ഫോണുകളിൽ ഉപയോഗിക്കാൻ Google Sheet ബന്ധിപ്പിക്കുക.</p>
+            <label class="field-label">Apps Script Web App URL</label>
+            <input id="sheetUrl" class="field-control" type="url" placeholder="https://script.google.com/macros/s/.../exec" />
+            <div class="button-row">
+              <button class="btn primary" id="connectSheet">ബന്ധിപ്പിക്കുക</button>
+              <button class="btn light" id="migrateSheet">ആദ്യ ഡാറ്റ മാറ്റുക</button>
+            </div>
+            <button class="btn light full" id="pullSheet">Sheet-ൽ നിന്ന് പുതുക്കുക</button>
+            <p id="sheetSyncStatus" class="hint" role="status">ഇതുവരെ ബന്ധിപ്പിച്ചിട്ടില്ല.</p>
+          </section>
           <section class="settings-card backup-card">
             <h3>ഡാറ്റ ബാക്കപ്പ്</h3>
             <p class="hint">ഈ ഫോണിലെ ഡാറ്റ സുരക്ഷിതമായി ഡൗൺലോഡ് ചെയ്യാം.</p>
@@ -198,6 +210,6 @@
       </div>
       <div id="toast" class="toast" role="status"></div>
     </div>
-    <script src="./app.js" defer></script>
+    <script src="./app.js" defer></script>\n    <script src="./sync.js" defer></script>
   </body>
 </html>
