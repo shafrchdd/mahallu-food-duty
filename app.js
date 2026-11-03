@@ -999,6 +999,8 @@ window.MahalluApp = {
     if (!next || !Array.isArray(next.people) || !next.days || !next.rotation) throw new Error('Invalid Sheet data');
     state = next;
     if (!state.rotation.startDate) state.rotation.startDate = today();
+    // Remove any old per-device app database after the central Sheet has loaded.
+    localStorage.removeItem(KEY);
     save(); refreshAll(); renderSchedule(); renderPeople(); renderHistoryIfOpen();
   }
 };
