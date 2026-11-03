@@ -463,7 +463,9 @@ function renderPeople() {
         esc(p.name) +
         '</b><small>' +
         esc(p.phone || 'ഫോൺ ഇല്ല') +
-        '</small></div><button class="mini-action" data-edit="' +
+        '</small></div><button class="mini-action" data-order="' +
+        esc(p.id) +
+        '">ക്രമം മാറ്റുക</button><button class="mini-action" data-edit="' +
         esc(p.id) +
         '">തിരുത്തുക</button><button class="mini-action delete" data-remove="' +
         esc(p.id) +
@@ -473,6 +475,9 @@ function renderPeople() {
   });
   $('peopleList').innerHTML =
     out || '<div class="empty-state">ആളുകളെ കണ്ടെത്തിയില്ല.</div>';
+  $('peopleList')
+    .querySelectorAll('[data-order]')
+    .forEach(b => (b.onclick = () => movePersonOrder(b.dataset.order)));
   $('peopleList')
     .querySelectorAll('[data-edit]')
     .forEach(b => (b.onclick = () => editPerson(b.dataset.edit)));
@@ -679,6 +684,36 @@ function addPerson(name, phone, area) {
   save();
   refreshAll();
   toast('വ്യക്തിയെ ചേർത്തു.');
+}
+function movePersonOrder(id) {
+  const person = findPerson(id);
+  if (!person) return;
+  const all = ordered();
+  const areaPeople = all.filter(p => p.area === person.area);
+  const areaStart = all.findIndex(p => p.area === person.area) + 1;
+  const currentSerial = all.findIndex(p => p.id === id) + 1;
+  const minSerial = areaStart;
+  const maxSerial = areaStart + areaPeople.length - 1;
+  const answer = prompt(
+    person.name + ' — പുതിയ ക്രമ നമ്പർ നൽകുക (' + minSerial + ' മുതൽ ' + maxSerial + ' വരെ)',
+    String(currentSerial)
+  );
+  if (answer === null) return;
+  const targetSerial = Number(answer);
+  if (!Number.isInteger(targetSerial) || targetSerial < minSerial || targetSerial > maxSerial) {
+    toast('ഈ ഏരിയയിലെ ' + minSerial + ' മുതൽ ' + maxSerial + ' വരെയുള്ള നമ്പർ നൽകുക.');
+    return;
+  }
+  const from = areaPeople.findIndex(p => p.id === id);
+  const to = targetSerial - minSerial;
+  if (from === to) return;
+  const moved = areaPeople.splice(from, 1)[0];
+  areaPeople.splice(to, 0, moved);
+  areaPeople.forEach((p, index) => { p.order = index + 1; });
+  refreshUpcoming();
+  save();
+  refreshAll();
+  toast(person.name + ' ന്റെ ക്രമം ' + targetSerial + ' ആക്കി.');
 }
 function removePerson(id) {
   const p = findPerson(id);
