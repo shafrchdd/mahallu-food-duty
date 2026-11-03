@@ -2,7 +2,8 @@
   // Only connection credentials are kept on this device. App records live in Google Sheets.
   const CONFIG_KEY = 'mahallu_food_duty_sheet_url';
   const ACCESS_KEY = 'mahallu_food_duty_access_key';
-  let endpoint = localStorage.getItem(CONFIG_KEY) || '';
+  const DEFAULT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyBaPEnSsEJyYOWs8lip16qLzxUdebhH1Uq_kHrL1wMJZ-vZFKQGC_qlPlMk0mdr554/exec';
+  let endpoint = localStorage.getItem(CONFIG_KEY) || DEFAULT_ENDPOINT;
   let accessKey = localStorage.getItem(ACCESS_KEY) || '';
   let version = 0, timer = null, pollTimer = null;
   let busy = false, pending = false, ready = false, bootstrapped = false;
