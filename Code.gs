@@ -1,3 +1,4 @@
+const SPREADSHEET_ID = '1oAfB8ocXOXprf11ww8mrBdi1ND2fBttigwAl13qLjWs';
 const SHEET_NAME = 'AppData';
 function doGet(e) {
   const key = String((e && e.parameter && e.parameter.key) || '');
@@ -56,7 +57,7 @@ function writeState_(payload) {
   } finally { lock.releaseLock(); }
 }
 function getSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
