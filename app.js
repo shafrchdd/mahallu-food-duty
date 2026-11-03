@@ -10,6 +10,19 @@ const AREAS = [
   'നീലാണ്ടൻക്കുന്ന്',
   'മരുതംപാറ',
 ];
+const PEOPLE_AREAS_UI_KEY = 'mahallu_food_duty_expanded_areas_v1';
+let expandedPeopleAreas = new Set();
+try {
+  const savedAreas = JSON.parse(localStorage.getItem(PEOPLE_AREAS_UI_KEY) || '[]');
+  if (Array.isArray(savedAreas)) {
+    expandedPeopleAreas = new Set(savedAreas.filter(area => AREAS.includes(area)));
+  }
+} catch {}
+function saveExpandedPeopleAreas() {
+  try {
+    localStorage.setItem(PEOPLE_AREAS_UI_KEY, JSON.stringify([...expandedPeopleAreas]));
+  } catch {}
+}
 const MEALS = [
   { id: 'morning', label: 'രാവിലെ' },
   { id: 'noon', label: 'ഉച്ചയ്ക്ക്' },
@@ -438,9 +451,8 @@ function renderPeople() {
     a => '<option value="' + esc(a) + '">' + esc(a) + '</option>'
   ).join('');
   if (AREAS.includes(selectedArea)) $('personArea').value = selectedArea;
-  let index = 0,
-    out = '';
-  AREAS.forEach(area => {
+  let out = '';
+  AREAS.forEach((area, areaIndex) => {
     const group = list.filter(
       p =>
         p.area === area &&
@@ -449,16 +461,27 @@ function renderPeople() {
           (p.phone || '').toLowerCase().includes(q))
     );
     if (q && !group.length) return;
+    const expanded = expandedPeopleAreas.has(area);
+    const contentId = 'people-area-content-' + areaIndex;
     out +=
-      '<section class="area-group"><div class="area-heading"><span>' +
+      '<section class="area-group"><button type="button" class="area-heading" data-area-toggle="' +
       esc(area) +
-      '</span><span>' +
+      '" aria-expanded="' +
+      String(expanded) +
+      '" aria-controls="' +
+      contentId +
+      '"><span class="area-heading-name">' +
+      esc(area) +
+      '</span><span class="area-heading-meta"><span>' +
       group.length +
-      ' പേർ</span></div>';
+      ' പേർ</span><span class="area-chevron" aria-hidden="true">⌄</span></span></button><div class="area-content" id="' +
+      contentId +
+      '"' +
+      (expanded ? '' : ' hidden') +
+      '>';
     if (!group.length)
       out += '<div class="empty-state">ആളുകളെ ചേർത്തിട്ടില്ല</div>';
     group.forEach(p => {
-      index++;
       out +=
         '<div class="person-row"><span class="person-number">' +
         serial(p.id) +
@@ -474,10 +497,19 @@ function renderPeople() {
         esc(p.id) +
         '">×</button></div>';
     });
-    out += '</section>';
+    out += '</div></section>';
   });
   $('peopleList').innerHTML =
     out || '<div class="empty-state">ആളുകളെ കണ്ടെത്തിയില്ല.</div>';
+  $('peopleList')
+    .querySelectorAll('[data-area-toggle]')
+    .forEach(b => (b.onclick = () => {
+      const area = b.dataset.areaToggle;
+      if (expandedPeopleAreas.has(area)) expandedPeopleAreas.delete(area);
+      else expandedPeopleAreas.add(area);
+      saveExpandedPeopleAreas();
+      renderPeople();
+    }));
   $('peopleList')
     .querySelectorAll('[data-order]')
     .forEach(b => (b.onclick = () => movePersonOrder(b.dataset.order)));
@@ -728,6 +760,8 @@ document.querySelectorAll('[data-voice-target]').forEach(button => {
 function addPerson(name, phone, area) {
   const p = { id: uid(), name, phone, area, order: state.order++ };
   state.people.push(p);
+  expandedPeopleAreas.add(area);
+  saveExpandedPeopleAreas();
   if (!state.rotation.startPersonId) state.rotation.startPersonId = p.id;
   refreshUpcoming();
   save();
@@ -803,6 +837,8 @@ function editPerson(id) {
   p.name = name.trim();
   p.phone = phone.trim();
   p.area = AREAS[ai];
+  expandedPeopleAreas.add(p.area);
+  saveExpandedPeopleAreas();
   refreshUpcoming();
   save();
   refreshAll();
@@ -903,7 +939,22 @@ $('personForm').onsubmit = e => {
   $('personPhone').value = '';
   $('personName').focus();
 };
-$('peopleSearch').oninput = renderPeople;
+$('peopleSearch').oninput = () => {
+  const q = $('peopleSearch').value.trim().toLowerCase();
+  if (q) {
+    AREAS.forEach(area => {
+      const hasMatch = state.people.some(
+        p =>
+          p.area === area &&
+          (p.name.toLowerCase().includes(q) ||
+            (p.phone || '').toLowerCase().includes(q))
+      );
+      if (hasMatch) expandedPeopleAreas.add(area);
+    });
+    saveExpandedPeopleAreas();
+  }
+  renderPeople();
+};
 $('toggleRotation').onclick = () => {
   const panel = $('rotationPanel');
   panel.classList.toggle('hidden');
