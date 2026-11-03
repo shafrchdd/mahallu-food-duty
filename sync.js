@@ -3,7 +3,9 @@
   const CONFIG_KEY = 'mahallu_food_duty_sheet_url';
   const ACCESS_KEY = 'mahallu_food_duty_access_key';
   const DEFAULT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyBaPEnSsEJyYOWs8lip16qLzxUdebhH1Uq_kHrL1wMJZ-vZFKQGC_qlPlMk0mdr554/exec';
-  let endpoint = localStorage.getItem(CONFIG_KEY) || DEFAULT_ENDPOINT;
+  // Always use the current project endpoint; discard any stale endpoint saved by an older build.
+  let endpoint = DEFAULT_ENDPOINT;
+  try { localStorage.setItem(CONFIG_KEY, DEFAULT_ENDPOINT); } catch (_) {}
   let accessKey = localStorage.getItem(ACCESS_KEY) || '';
   let version = 0, timer = null, pollTimer = null;
   let busy = false, pending = false, ready = false, bootstrapped = false;
